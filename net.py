@@ -81,7 +81,7 @@ class Decoder(chainer.Chain):
                 h = self.c7(h)
         return h
 
-    
+
 class Discriminator(chainer.Chain):
     def __init__(self, in_ch, out_ch):
         layers = {}

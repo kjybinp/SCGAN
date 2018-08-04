@@ -20,14 +20,14 @@ from facade_dataset import FacadeDataset
 from facade_visualizer import out_image
 
 def main():
-    parser = argparse.ArgumentParser(description='chainer implementation of pix2pix')
+    parser = argparse.ArgumentParser(description='SCGAN by yawata')
     parser.add_argument('--batchsize', '-b', type=int, default=1,
                         help='Number of images in each mini-batch')
     parser.add_argument('--epoch', '-e', type=int, default=200,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID (negative value indicates CPU)')
-    parser.add_argument('--dataset', '-i', default='./facade/base',
+    parser.add_argument('--dataset', '-i', default='./ISTD',
                         help='Directory of image files.')
     parser.add_argument('--out', '-o', default='result',
                         help='Directory to output the result')
@@ -47,15 +47,15 @@ def main():
     print('')
 
     # Set up a neural network to train
-    enc = Encoder(in_ch=12)
-    dec = Decoder(out_ch=3)
-    dis = Discriminator(in_ch=12, out_ch=3)
+    enc = Encoder(in_ch=3)
+    dec = Decoder(out_ch=2)
+    #dis = Discriminator(in_ch=3, out_ch=2)
     
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
         enc.to_gpu()  # Copy the model to the GPU
         dec.to_gpu()
-        dis.to_gpu()
+        #dis.to_gpu()
 
     # Setup an optimizer
     def make_optimizer(model, alpha=0.0002, beta1=0.5):
@@ -65,7 +65,7 @@ def main():
         return optimizer
     opt_enc = make_optimizer(enc)
     opt_dec = make_optimizer(dec)
-    opt_dis = make_optimizer(dis)
+    #opt_dis = make_optimizer(dis)
 
     train_d = FacadeDataset(args.dataset, data_range=(1,300))
     test_d = FacadeDataset(args.dataset, data_range=(300,379))
@@ -76,13 +76,14 @@ def main():
 
     # Set up a trainer
     updater = FacadeUpdater(
-        models=(enc, dec, dis),
+        #models=(enc, dec, dis),
+        models=(enc, dec),
         iterator={
             'main': train_iter,
             'test': test_iter},
         optimizer={
-            'enc': opt_enc, 'dec': opt_dec, 
-            'dis': opt_dis},
+            'enc': opt_enc, 'dec': opt_dec},
+            #'dis': opt_dis},
         device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
@@ -95,8 +96,8 @@ def main():
         enc, 'enc_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
     trainer.extend(extensions.snapshot_object(
         dec, 'dec_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
-    trainer.extend(extensions.snapshot_object(
-        dis, 'dis_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
+    #trainer.extend(extensions.snapshot_object(
+        #dis, 'dis_iter_{.updater.iteration}.npz'), trigger=snapshot_interval)
     trainer.extend(extensions.LogReport(trigger=display_interval))
     trainer.extend(extensions.PrintReport([
         'epoch', 'iteration', 'enc/loss', 'dec/loss', 'dis/loss',
