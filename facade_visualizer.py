@@ -8,8 +8,9 @@ from PIL import Image
 import chainer
 import chainer.cuda
 from chainer import Variable
+import chainer.function as F
 
-def out_image(updater, enc, dec, rows, cols, seed, dst):
+def out_image(updater, enc, dec, enc_removal, dec_removal, rows,cols, seed, dst):
     @chainer.training.make_extension()
     def make_image(trainer):
         np.random.seed(seed)
@@ -24,6 +25,7 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
         in_all = np.zeros((n_images, in_ch, w_in, w_in)).astype("f")
         gt_all = np.zeros((n_images, out_ch, w_out, w_out)).astype("i")
         gen_all = np.zeros((n_images, out_ch, w_out, w_out)).astype("i")
+        img_all = np.zeros((n_images, in_ch, w_in, w_in)).astype("f")
         
         for it in range(n_images):
             batch = updater.get_iterator('test').next()
@@ -39,10 +41,14 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
 
             z = enc(x_in)
             x_out = dec(z)
+            x = F.concat([x_in,x_out],axis=1)
+            z_removal = enc_removal(x)
+            img = dec_removal(z_removal)
             
             in_all[it,:] = x_in.data.get()[0,:]
             gt_all[it,:] = t_out.get()[0,:]
             gen_all[it,:] = x_out.data.get()[0,:]
+            img_all[it,:] = img.data.get()[0,:]
         
         
         def save_image(x, name, mode=None):
@@ -95,6 +101,8 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
                             x[img, 0, xx, yy] = 100*i
         save_image(x, "gt", mode='HSV')
 
+        x = np.asarray(np.clip(img_all * 128 + 128, 0.0, 255.0), dtype=np.uint8)
+        save_image(x, "img")
         '''
         x = np.asarray(np.clip(gen_all * 128 + 128, 0.0, 255.0), dtype=np.uint8)
         save_image(x, "gen")
