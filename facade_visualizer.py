@@ -8,7 +8,7 @@ from PIL import Image
 import chainer
 import chainer.cuda
 from chainer import Variable
-import chainer.function as F
+import chainer.functions as F
 
 def out_image(updater, enc, dec, enc_removal, dec_removal, rows,cols, seed, dst):
     @chainer.training.make_extension()
@@ -41,8 +41,8 @@ def out_image(updater, enc, dec, enc_removal, dec_removal, rows,cols, seed, dst)
 
             z = enc(x_in)
             x_out = dec(z)
-            x = F.concat([x_in,x_out],axis=1)
-            z_removal = enc_removal(x)
+            #x = F.concat([x_in,x_out],axis=1)
+            z_removal = enc_removal(x_in,x_out)
             img = dec_removal(z_removal)
             
             in_all[it,:] = x_in.data.get()[0,:]
