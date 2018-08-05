@@ -11,9 +11,11 @@ from chainer import training
 from chainer.training import extensions
 from chainer import serializers
 
-from net import Discriminator
-from net import Encoder
-from net import Decoder
+from net import Discriminator_detect
+from net import Encoder_detect
+from net import Decoder_detect
+from net import Discriminator_removal
+from net import Encoder_removal
 from updater import FacadeUpdater
 
 from facade_dataset import FacadeDataset
@@ -47,15 +49,22 @@ def main():
     print('')
 
     # Set up a neural network to train
-    enc = Encoder(in_ch=3)
-    dec = Decoder(out_ch=2)
-    dis = Discriminator(in_ch=3, out_ch=2)
+    enc = Encoder_detect(in_ch=3)
+    dec = Decoder_detect(out_ch=2)
+    dis = Discriminator_detect(in_ch=3, out_ch=2)
+
+    enc_removal = Encoder_removal(in_ch=5)
+    dec_removal = Decoder_detect(out_ch = 3)
+    dis_removal = Discriminator_removal(in_ch=3, mask_ch=2, removal_ch=3)
     
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
         enc.to_gpu()  # Copy the model to the GPU
         dec.to_gpu()
         dis.to_gpu()
+        enc_removal.to_gpu()
+        dec_removal.to_gpu()
+        dis_removal.to_gpu()
 
     # Setup an optimizer
     def make_optimizer(model, alpha=0.0002, beta1=0.5):
@@ -66,6 +75,9 @@ def main():
     opt_enc = make_optimizer(enc)
     opt_dec = make_optimizer(dec)
     opt_dis = make_optimizer(dis)
+    opt_enc_removal = make_optimizer(enc_removal)
+    opt_dec_removal = make_optimizer(dec_removal)
+    opt_dis_removal = make_optimizer(dis_removal)
 
     train_d = FacadeDataset(args.dataset, data_range=(1,1100))
     test_d = FacadeDataset(args.dataset, data_range=(1100,1200))
@@ -76,14 +88,15 @@ def main():
 
     # Set up a trainer
     updater = FacadeUpdater(
-        models=(enc, dec, dis),
+        models=(enc, dec, dis,enc_removal, dec_removal, dis_removal),
         #models=(enc, dec),
         iterator={
             'main': train_iter,
             'test': test_iter},
         optimizer={
-            'enc': opt_enc, 'dec': opt_dec,
-            'dis': opt_dis},
+            'enc': opt_enc, 'dec': opt_dec,'dis': opt_dis, \
+            'enc_removal': opt_enc_removal, 'dec_removal': opt_dec_removal, 'dis_removal': opt_dis_removal,
+        },
         device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 

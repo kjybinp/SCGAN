@@ -38,6 +38,7 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
                 # resize images so that min(w, h) == 286
                 img = img.resize((int(r*w), int(r*h)), Image.BILINEAR)
                 mask = mask.resize((int(r*w), int(r*h)), Image.NEAREST)
+                removal = removal.resize((int(r * w), int(r * h)), Image.BILINEAR)
 
                 img = np.asarray(img).astype("f").transpose(2,0,1)/128.0-1.0
                 removal = np.asarray(removal).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
@@ -59,5 +60,5 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
         x_r = x_l+crop_width
         y_l = np.random.randint(0,h-crop_width)
         y_r = y_l+crop_width
-        return self.dataset[i][0][:,y_l:y_r,x_l:x_r], self.dataset[i][1][:,y_l:y_r,x_l:x_r]
+        return self.dataset[i][0][:,y_l:y_r,x_l:x_r], self.dataset[i][1][:,y_l:y_r,x_l:x_r], self.dataset[i][2][:,y_l:y_r,x_l:x_r]
     
