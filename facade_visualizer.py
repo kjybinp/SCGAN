@@ -72,18 +72,27 @@ def out_image(updater, enc, dec, rows, cols, seed, dst):
                     max = 0
                     max_i = -1
                     for i in range(2):
-                        if np.uint8(15 * i * gen_all[img, i, xx, yy]) > max:
-                            max = np.uint8(15 * i * gen_all[img, i, xx, yy])
+                        if  gen_all[img, i, xx, yy] > max:
+                            max = gen_all[img, i, xx, yy]
                             max_i = i
                     for i in range(2):
                         if i == max_i:
-                            x[img, 0, xx, yy] += np.uint8(200 * i)
+                            x[img, 0, xx, yy] = 100*i
         save_image(x, "gen", mode='HSV')
 
         x = np.ones((n_images, 3, w_in, w_in)).astype(np.uint8) * 255
-        x[:, 0, :, :] = 0
-        for i in range(2):
-            x[:, 0, :, :] += np.uint8(15 * i * gt_all[:, i, :, :])
+        for img in range(25):
+            for xx in range(w_out):
+                for yy in range(w_out):
+                    max = 0
+                    max_i = -1
+                    for i in range(2):
+                        if  gt_all[img, i, xx, yy] > max:
+                            max = gt_all[img, i, xx, yy]
+                            max_i = i
+                    for i in range(2):
+                        if i == max_i:
+                            x[img, 0, xx, yy] = 100*i
         save_image(x, "gt", mode='HSV')
 
         '''

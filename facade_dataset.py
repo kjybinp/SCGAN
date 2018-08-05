@@ -42,7 +42,7 @@ class FacadeDataset(dataset_mixin.DatasetMixin):
                 img = np.asarray(img).astype("f").transpose(2,0,1)/128.0-1.0
                 removal = np.asarray(removal).astype("f").transpose(2, 0, 1) / 128.0 - 1.0
                 mask_ = np.asarray(mask)/255# [0, 12)
-                mask = np.zeros((2, img.shape[1], img.shape[2])).astype("i")
+                mask = np.zeros((2, img.shape[1], img.shape[2])).astype("f")
                 for j in range(2):
                     mask[j,:] = mask_==j
                 self.dataset.append((img,mask,removal))
